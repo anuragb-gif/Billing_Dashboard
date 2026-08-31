@@ -1,0 +1,62 @@
+:root {
+  --bg: #F4F6F8;
+  --surface: #FFFFFF;
+  --ink: #16212E;
+  --ink-muted: #5B6B7C;
+  --ink-faint: #93A2B0;
+  --line: #E1E6EB;
+  --line-strong: #C8D0D8;
+
+  --navy: #10222F;
+  --navy-soft: #1B3546;
+
+  --teal: #0D9797;
+  --teal-soft: #E1F3F1;
+  --amber: #C96A2E;
+  --amber-soft: #FBEBE0;
+
+  --frozen: #3E7CB1;
+  --frozen-soft: #E3EEF7;
+  --chilled: #0D9797;
+  --chilled-soft: #E1F3F1;
+  --dry: #B98A3E;
+  --dry-soft: #F5ECDA;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+
+  --font-sans: 'IBM Plex Sans', -apple-system, Segoe UI, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+a { color: var(--teal); }
+
+:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
