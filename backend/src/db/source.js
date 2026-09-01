@@ -11,7 +11,9 @@ const config = {
     encrypt: (process.env.SQL_ENCRYPT || 'true') === 'true',
     trustServerCertificate: (process.env.SQL_TRUST_SERVER_CERT || 'true') === 'true',
   },
-  requestTimeout: 5 * 60 * 1000, // 5 min - these are large reporting queries
+  // These are large reporting queries and the nightly run competes with other
+  // 2 AM jobs on the SQL Server, so give each query plenty of room.
+  requestTimeout: Number(process.env.SQL_REQUEST_TIMEOUT_MS || 25 * 60 * 1000), // 25 min
   pool: { max: 5, min: 0, idleTimeoutMillis: 30000 },
 };
 
