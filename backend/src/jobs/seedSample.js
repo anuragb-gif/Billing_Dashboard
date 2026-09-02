@@ -123,6 +123,31 @@ function seedItemMaster() {
   return rows;
 }
 
+function seedThroughput() {
+  const rows = [];
+  const today = new Date();
+  for (const [locCode, locName, region] of LOCATIONS) {
+    for (const [custNo, custName] of CUSTOMERS) {
+      if (Math.random() < 0.35) continue;
+      for (let d = 60; d >= 0; d--) {
+        if (Math.random() < 0.5) continue;
+        const date = new Date(today);
+        date.setDate(date.getDate() - d);
+        const inQty = Math.random() < 0.6 ? +rand(0, 1200).toFixed(2) : 0;
+        const outQty = Math.random() < 0.6 ? +rand(0, 900).toFixed(2) : 0;
+        rows.push({
+          'Posting_Date': dateStr(date), 'Location_Code': locCode, 'Location_Name': locName,
+          'Region': region, 'StorageType': pick(['FROZEN', 'CHILLED', 'DRY']),
+          'Customer_No': custNo, 'Customer_name': custName,
+          'Inward_Qty': inQty, 'Outward_Qty': outQty,
+          'Inward_Pallet': +(inQty / 50).toFixed(2), 'Outward_Pallet': +(outQty / 50).toFixed(2),
+        });
+      }
+    }
+  }
+  return rows;
+}
+
 const BILLING_COLUMNS = [
   'Date', 'Item_No', 'Item Name', 'Base UOM', 'StorageType', 'Location Code',
   'Opening', 'In Quantity', 'Out Quantity', 'Closing', 'Status', 'Customer No',
@@ -139,14 +164,20 @@ const ITEM_MASTER_COLUMNS = [
   'PCSConv', 'PKTConv', 'Billing Category Qty', 'BillingCategoryUOM', 'Storage_Type',
   'Unit_Price', 'Base_Unit_of_Measure', 'Quantity', 'Qty in Pal', 'Item Name',
 ];
+const THROUGHPUT_COLUMNS = [
+  'Posting_Date', 'Location_Code', 'Location_Name', 'Region', 'StorageType',
+  'Customer_No', 'Customer_name', 'Inward_Qty', 'Outward_Qty', 'Inward_Pallet', 'Outward_Pallet',
+];
 
 const billingRows = seedBilling();
 const utilRows = seedUtilization();
 const itemRows = seedItemMaster();
+const thruRows = seedThroughput();
 
 replaceTable('billing', BILLING_COLUMNS, billingRows);
 replaceTable('utilization', UTILIZATION_COLUMNS, utilRows);
 replaceTable('item_master', ITEM_MASTER_COLUMNS, itemRows);
-logRefresh({ status: 'success (sample data)', billingRows: billingRows.length, utilizationRows: utilRows.length, itemMasterRows: itemRows.length });
+replaceTable('throughput', THROUGHPUT_COLUMNS, thruRows);
+logRefresh({ status: 'success (sample data)', billingRows: billingRows.length, utilizationRows: utilRows.length, itemMasterRows: itemRows.length, throughputRows: thruRows.length });
 
-console.log(`Seeded sample data: billing=${billingRows.length}, utilization=${utilRows.length}, item_master=${itemRows.length}`);
+console.log(`Seeded sample data: billing=${billingRows.length}, utilization=${utilRows.length}, item_master=${itemRows.length}, throughput=${thruRows.length}`);

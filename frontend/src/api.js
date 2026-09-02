@@ -33,6 +33,8 @@ export const api = {
   utilizationSummary: (params) => get('/utilization/summary', params),
   itemMaster: (params) => get('/item-master', params),
   itemMasterSummary: (params) => get('/item-master/summary', params),
+  throughput: (params) => get('/throughput', params),
+  throughputSummary: (params) => get('/throughput/summary', params),
   // Direct download URL for the "Export CSV" links (streams all matching rows).
   exportUrl: (path, params) => `${BASE}${path}${queryString(params)}`,
 };

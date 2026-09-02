@@ -9,14 +9,18 @@ fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
 
 const db = new Database(resolvedPath);
 db.pragma('journal_mode = WAL');
+// Wait rather than error if another connection (e.g. `npm run refresh` running
+// alongside the server) briefly holds a write lock during a table swap.
+db.pragma('busy_timeout = 8000');
 
 // Quote an identifier that may contain spaces (the report keeps the original
 // SQL column names verbatim, e.g. "Item Name", "Op Pal").
 const q = (id) => '"' + String(id).replace(/"/g, '""') + '"';
 
-// Bump this whenever the column layout of billing/utilization/item_master
-// changes so the old tables are dropped and rebuilt on the next refresh.
-const SCHEMA_VERSION = 2;
+// Bump this whenever the column layout of an existing report changes so the
+// old tables are dropped and rebuilt on the next refresh. Purely additive
+// changes (a brand-new report table) do not need a destructive migration.
+const SCHEMA_VERSION = 3;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS billing (
@@ -44,6 +48,12 @@ CREATE TABLE IF NOT EXISTS item_master (
   "Base_Unit_of_Measure" TEXT, "Quantity" REAL, "Qty in Pal" REAL, "Item Name" TEXT
 );
 
+CREATE TABLE IF NOT EXISTS throughput (
+  "Posting_Date" TEXT, "Location_Code" TEXT, "Location_Name" TEXT, "Region" TEXT,
+  "StorageType" TEXT, "Customer_No" TEXT, "Customer_name" TEXT,
+  "Inward_Qty" REAL, "Outward_Qty" REAL, "Inward_Pallet" REAL, "Outward_Pallet" REAL
+);
+
 CREATE TABLE IF NOT EXISTS refresh_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ran_at TEXT NOT NULL,
@@ -51,6 +61,7 @@ CREATE TABLE IF NOT EXISTS refresh_log (
   billing_rows INTEGER,
   utilization_rows INTEGER,
   item_master_rows INTEGER,
+  throughput_rows INTEGER,
   error TEXT
 );
 
@@ -60,13 +71,17 @@ CREATE INDEX IF NOT EXISTS idx_util_date ON utilization("OnDate");
 CREATE INDEX IF NOT EXISTS idx_util_customer ON utilization("Primary_Customer_No");
 CREATE INDEX IF NOT EXISTS idx_item_customer ON item_master("Customer");
 CREATE INDEX IF NOT EXISTS idx_item_location ON item_master("LocationCode");
+CREATE INDEX IF NOT EXISTS idx_thru_date ON throughput("Posting_Date");
+CREATE INDEX IF NOT EXISTS idx_thru_customer ON throughput("Customer_No");
 `;
 
-// One-time migration: if the stored layout is older than SCHEMA_VERSION, drop
-// the data tables so they are recreated with the current columns. They repopulate
-// on the next `npm run refresh` (or `npm run seed-sample`).
+// Migrations. Only a report whose *column layout changed* needs its table
+// dropped and rebuilt; a brand-new report table is created by SCHEMA below.
 const storedVersion = db.pragma('user_version', { simple: true });
-if (storedVersion < SCHEMA_VERSION) {
+
+// v1 -> v2: billing/utilization/item_master columns were switched to the exact
+// SQL names, so the old tables had to go.
+if (storedVersion > 0 && storedVersion < 2) {
   db.exec(`
     DROP TABLE IF EXISTS billing;
     DROP TABLE IF EXISTS utilization;
@@ -75,13 +90,23 @@ if (storedVersion < SCHEMA_VERSION) {
     DROP TABLE IF EXISTS utilization_staging;
     DROP TABLE IF EXISTS item_master_staging;
   `);
+}
+
+db.exec(SCHEMA);
+
+// v2 -> v3 is additive (new throughput table). Backfill the refresh_log column
+// on databases that predate it.
+const refreshLogCols = db.prepare(`PRAGMA table_info(refresh_log)`).all().map((c) => c.name);
+if (!refreshLogCols.includes('throughput_rows')) {
+  db.exec(`ALTER TABLE refresh_log ADD COLUMN throughput_rows INTEGER`);
+}
+
+if (storedVersion < SCHEMA_VERSION) {
   db.pragma(`user_version = ${SCHEMA_VERSION}`);
   if (storedVersion > 0) {
     console.warn(`[localDb] schema upgraded ${storedVersion} -> ${SCHEMA_VERSION}; run a refresh to repopulate.`);
   }
 }
-
-db.exec(SCHEMA);
 
 /**
  * Replace a table's contents atomically: write to a staging table, then
@@ -112,11 +137,11 @@ function replaceTable(tableName, columns, rows) {
   swap();
 }
 
-function logRefresh({ status, billingRows, utilizationRows, itemMasterRows, error }) {
+function logRefresh({ status, billingRows, utilizationRows, itemMasterRows, throughputRows, error }) {
   db.prepare(
-    `INSERT INTO refresh_log (ran_at, status, billing_rows, utilization_rows, item_master_rows, error)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  ).run(new Date().toISOString(), status, billingRows ?? null, utilizationRows ?? null, itemMasterRows ?? null, error ?? null);
+    `INSERT INTO refresh_log (ran_at, status, billing_rows, utilization_rows, item_master_rows, throughput_rows, error)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).run(new Date().toISOString(), status, billingRows ?? null, utilizationRows ?? null, itemMasterRows ?? null, throughputRows ?? null, error ?? null);
 }
 
 module.exports = { db, replaceTable, logRefresh, q };

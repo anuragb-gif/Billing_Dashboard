@@ -22,6 +22,11 @@ const ENTITY = {
     customerCol: 'Customer', locationCol: 'LocationCode',
     order: `${q('Item Name')}`,
   },
+  throughput: {
+    table: 'throughput', dateCol: 'Posting_Date',
+    customerCol: 'Customer_No', locationCol: 'Location_Code',
+    order: `${q('Posting_Date')} DESC`,
+  },
 };
 
 function buildWhere(cfg, { dateFrom, dateTo, customerNo, locationCode } = {}) {
@@ -76,6 +81,9 @@ router.get('/meta/filters', (req, res) => {
      UNION
      SELECT DISTINCT ${q('Primary_Customer_No')}, ${q('Customer_Name')}
        FROM utilization WHERE ${q('Primary_Customer_No')} IS NOT NULL
+     UNION
+     SELECT DISTINCT ${q('Customer_No')}, ${q('Customer_name')}
+       FROM throughput WHERE ${q('Customer_No')} IS NOT NULL AND ${q('Customer_No')} <> ''
      ORDER BY customer_name`
   ).all();
   const locations = db.prepare(
@@ -83,10 +91,12 @@ router.get('/meta/filters', (req, res) => {
        SELECT ${q('Location Code')} AS location_code FROM billing WHERE ${q('Location Code')} IS NOT NULL
        UNION SELECT ${q('Code')} FROM utilization WHERE ${q('Code')} IS NOT NULL
        UNION SELECT ${q('LocationCode')} FROM item_master WHERE ${q('LocationCode')} IS NOT NULL
+       UNION SELECT ${q('Location_Code')} FROM throughput WHERE ${q('Location_Code')} IS NOT NULL
      ) ORDER BY location_code`
   ).all();
   const lastRefresh = db.prepare(
-    `SELECT ran_at, status, billing_rows, utilization_rows, item_master_rows FROM refresh_log ORDER BY id DESC LIMIT 1`
+    `SELECT ran_at, status, billing_rows, utilization_rows, item_master_rows, throughput_rows
+     FROM refresh_log ORDER BY id DESC LIMIT 1`
   ).get();
   res.json({ customers, locations, lastRefresh: lastRefresh || null });
 });
@@ -188,5 +198,41 @@ router.get('/item-master/summary', (req, res) => {
 });
 
 router.get('/item-master/export', (req, res) => streamCsv(req, res, 'item_master', 'item_master'));
+
+// ---- throughput (inward/outward per day) ----
+router.get('/throughput', (req, res) => {
+  const cfg = ENTITY.throughput;
+  const { where, params } = buildWhere(cfg, req.query);
+  const rows = db.prepare(
+    `SELECT * FROM throughput ${where} ORDER BY ${cfg.order} LIMIT ?`
+  ).all(...params, Number(req.query.limit) || 500);
+  res.json(rows);
+});
+
+router.get('/throughput/summary', (req, res) => {
+  const cfg = ENTITY.throughput;
+  const { where, params } = buildWhere(cfg, req.query);
+  const daily = db.prepare(
+    `SELECT ${q('Posting_Date')} AS posting_date,
+            SUM(${q('Inward_Qty')}) AS inward_qty, SUM(${q('Outward_Qty')}) AS outward_qty,
+            SUM(${q('Inward_Pallet')}) AS inward_pallet, SUM(${q('Outward_Pallet')}) AS outward_pallet
+     FROM throughput ${where} GROUP BY ${q('Posting_Date')} ORDER BY ${q('Posting_Date')}`
+  ).all(...params);
+  const byRegion = db.prepare(
+    `SELECT ${q('Region')} AS region,
+            SUM(${q('Inward_Qty')}) AS inward_qty, SUM(${q('Outward_Qty')}) AS outward_qty
+     FROM throughput ${where} GROUP BY ${q('Region')} ORDER BY (SUM(${q('Inward_Qty')}) + SUM(${q('Outward_Qty')})) DESC`
+  ).all(...params);
+  const totals = db.prepare(
+    `SELECT SUM(${q('Inward_Qty')}) AS total_inward_qty, SUM(${q('Outward_Qty')}) AS total_outward_qty,
+            SUM(${q('Inward_Pallet')}) AS total_inward_pallet, SUM(${q('Outward_Pallet')}) AS total_outward_pallet,
+            COUNT(DISTINCT ${q('Customer_No')}) AS active_customers,
+            COUNT(DISTINCT ${q('Location_Code')}) AS active_locations
+     FROM throughput ${where}`
+  ).get(...params);
+  res.json({ daily, byRegion, totals });
+});
+
+router.get('/throughput/export', (req, res) => streamCsv(req, res, 'throughput', 'throughput'));
 
 module.exports = router;

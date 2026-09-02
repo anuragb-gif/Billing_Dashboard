@@ -43,9 +43,17 @@ const ITEM_MASTER_COLUMNS = [
   'Quantity', 'Qty in Pal', 'Item Name',
 ];
 
+const THROUGHPUT_COLUMNS = [
+  'Posting_Date', 'Location_Code', 'Location_Name', 'Region', 'StorageType',
+  'Customer_No', 'Customer_name', 'Inward_Qty', 'Outward_Qty',
+  'Inward_Pallet', 'Outward_Pallet',
+];
+
 // Columns that come back from SQL Server as Date objects and need to be stored
 // as plain YYYY-MM-DD text.
-const DATE_COLUMNS = { billing: ['Date'], utilization: ['OnDate'], item_master: [] };
+const DATE_COLUMNS = {
+  billing: ['Date'], utilization: ['OnDate'], item_master: [], throughput: ['Posting_Date'],
+};
 
 function normalizeDates(rows, dateCols) {
   if (!dateCols.length) return rows;
@@ -84,11 +92,17 @@ async function runRefresh() {
     replaceTable('item_master', ITEM_MASTER_COLUMNS, normalizeDates(itemRows, DATE_COLUMNS.item_master));
     console.log(`[refresh] item master: ${itemRows.length} rows`);
 
+    console.log('[refresh] running throughput query...');
+    const thruRows = await runQuery(loadQueryTemplate('throughput.sql', dateFrom, dateTo));
+    replaceTable('throughput', THROUGHPUT_COLUMNS, normalizeDates(thruRows, DATE_COLUMNS.throughput));
+    console.log(`[refresh] throughput: ${thruRows.length} rows`);
+
     logRefresh({
       status: 'success',
       billingRows: billingRows.length,
       utilizationRows: utilRows.length,
       itemMasterRows: itemRows.length,
+      throughputRows: thruRows.length,
     });
     console.log('[refresh] done.');
   } catch (err) {
