@@ -3,3 +3,6 @@ dist/
 backend/data/
 backend/.env
 *.log
+
+# Vercel CLI link folder - never commit (holds project/org IDs)
+.vercel/
