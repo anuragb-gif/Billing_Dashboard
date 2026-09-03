@@ -4,7 +4,7 @@ import { api } from '../api';
 import KpiStrip from '../components/KpiStrip';
 import DataTable, { formatNumber } from '../components/DataTable';
 
-const num = (key) => ({ key, label: key, numeric: true, render: (r) => formatNumber(r[key]) });
+const num = (key, group) => ({ key, label: key, numeric: true, group, render: (r) => formatNumber(r[key]) });
 
 // Every column the Billing GU query returns, in order.
 const COLUMNS = [
@@ -26,9 +26,9 @@ const COLUMNS = [
   },
   { key: 'Customer No', label: 'Customer No' },
   { key: 'Customer Name', label: 'Customer Name' },
-  num('PALLET Conv'), num('Op Pal'), num('In Pal'), num('Out Pal'), num('Cl Pal'),
-  num('BILLKG Conv'), num('Op BillKg'), num('In BillKg'), num('Out BillKg'), num('Cl BillKg'),
-  num('CASE Conv'), num('Op Case'), num('In Case'), num('Out Case'), num('Cl Case'),
+  num('PALLET Conv', 'PALLET'), num('Op Pal', 'PALLET'), num('In Pal', 'PALLET'), num('Out Pal', 'PALLET'), num('Cl Pal', 'PALLET'),
+  num('BILLKG Conv', 'BILL KG'), num('Op BillKg', 'BILL KG'), num('In BillKg', 'BILL KG'), num('Out BillKg', 'BILL KG'), num('Cl BillKg', 'BILL KG'),
+  num('CASE Conv', 'CASE'), num('Op Case', 'CASE'), num('In Case', 'CASE'), num('Out Case', 'CASE'), num('Cl Case', 'CASE'),
 ];
 
 export default function Billing2({ filters }) {

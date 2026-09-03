@@ -387,6 +387,44 @@ table.data-table {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---- grouped column blocks (Billing GU: PALLET / BILL KG / CASE) ---- */
+.data-table thead tr.group-row th {
+  position: static;
+  text-align: center;
+  padding: 7px 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.data-table thead tr.group-row th.group-head--on {
+  color: var(--ink);
+  border-left: 2px solid var(--line-strong);
+}
+
+/* divider at the start of each UOM block */
+.data-table th.grp-start,
+.data-table td.grp-start { border-left: 2px solid var(--line-strong); }
+
+/* faint per-block tint so the three blocks read apart */
+.data-table td.grp--pallet  { background: rgba(13, 151, 151, 0.05); }
+.data-table td.grp--bill-kg { background: rgba(62, 124, 177, 0.055); }
+.data-table td.grp--case    { background: rgba(201, 106, 46, 0.055); }
+
+.data-table thead th.grp--pallet  { background: rgba(13, 151, 151, 0.10); color: #0B6E6E; }
+.data-table thead th.grp--bill-kg { background: rgba(62, 124, 177, 0.11); color: #2F5F87; }
+.data-table thead th.grp--case    { background: rgba(201, 106, 46, 0.11); color: #9A4E20; }
+
+/* keep row hover legible over the tint */
+.data-table tbody tr:hover td.grp--pallet  { background: rgba(13, 151, 151, 0.11); }
+.data-table tbody tr:hover td.grp--bill-kg { background: rgba(62, 124, 177, 0.12); }
+.data-table tbody tr:hover td.grp--case    { background: rgba(201, 106, 46, 0.12); }
+
 .status-pill {
   display: inline-block;
   padding: 2px 8px;
