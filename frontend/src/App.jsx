@@ -5,6 +5,7 @@ import NavRail from './components/NavRail';
 import FilterBar from './components/FilterBar';
 import Overview from './pages/Overview';
 import Billing from './pages/Billing';
+import Billing2 from './pages/Billing2';
 import Utilization from './pages/Utilization';
 import Throughput from './pages/Throughput';
 import ItemMaster from './pages/ItemMaster';
@@ -21,6 +22,7 @@ function defaultDateRange() {
 const PAGE_META = {
   overview: { title: 'Overview', subtitle: 'Cross-warehouse snapshot across billing, utilization, and stock' },
   billing: { title: 'Billing', subtitle: 'Daily opening, movement, and closing balances by item and customer' },
+  'billing-gu': { title: 'Billing GU', subtitle: 'Billing for the GU customer set, with PALLET / BILL KG / CASE conversions' },
   utilization: { title: 'Utilization', subtitle: 'Storage capacity in use, by location and storage type' },
   throughput: { title: 'Throughput', subtitle: 'Inward and outward quantity and pallets per day, by customer and location' },
   'item-master': { title: 'Item Master', subtitle: 'Current stock, conversions, and pricing by SKU' },
@@ -29,13 +31,14 @@ const PAGE_META = {
 export default function App() {
   const [activePage, setActivePage] = useState('overview');
   const [filters, setFilters] = useState(defaultDateRange());
-  const [meta, setMeta] = useState({ customers: [], locations: [], lastRefresh: null });
+  const [meta, setMeta] = useState({ customers: [], locations: [], baseUoms: [], lastRefresh: null });
 
   useEffect(() => {
     api.filters().then(setMeta).catch(() => {});
   }, []);
 
   const showDateRange = activePage !== 'item-master';
+  const showUom = activePage === 'billing-gu';
   const { title, subtitle } = PAGE_META[activePage];
 
   return (
@@ -54,11 +57,14 @@ export default function App() {
           onChange={setFilters}
           customers={meta.customers}
           locations={meta.locations}
+          uoms={meta.baseUoms}
           showDateRange={showDateRange}
+          showUom={showUom}
         />
 
         {activePage === 'overview' && <Overview filters={filters} />}
         {activePage === 'billing' && <Billing filters={filters} />}
+        {activePage === 'billing-gu' && <Billing2 filters={filters} />}
         {activePage === 'utilization' && <Utilization filters={filters} />}
         {activePage === 'throughput' && <Throughput filters={filters} />}
         {activePage === 'item-master' && <ItemMaster filters={filters} />}

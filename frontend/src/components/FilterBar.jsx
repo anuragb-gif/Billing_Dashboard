@@ -1,5 +1,8 @@
+import CustomerSelect from './CustomerSelect';
+
 export default function FilterBar({
-  filters, onChange, customers = [], locations = [], showDateRange = true,
+  filters, onChange, customers = [], locations = [], uoms = [],
+  showDateRange = true, showUom = false,
 }) {
   return (
     <div className="filter-bar">
@@ -25,21 +28,13 @@ export default function FilterBar({
           </div>
         </>
       )}
-      <div className="filter-field">
-        <label className="filter-label">Customer</label>
-        <select
-          className="filter-select"
-          value={filters.customerNo || ''}
-          onChange={(e) => onChange({ ...filters, customerNo: e.target.value })}
-        >
-          <option value="">All customers</option>
-          {customers.map((c) => (
-            <option key={c.customer_no} value={c.customer_no}>
-              {c.customer_name || c.customer_no}
-            </option>
-          ))}
-        </select>
-      </div>
+
+      <CustomerSelect
+        value={filters.customerNo || ''}
+        onChange={(customerNo) => onChange({ ...filters, customerNo })}
+        customers={customers}
+      />
+
       <div className="filter-field">
         <label className="filter-label">Location</label>
         <select
@@ -53,6 +48,22 @@ export default function FilterBar({
           ))}
         </select>
       </div>
+
+      {showUom && (
+        <div className="filter-field">
+          <label className="filter-label">Base UOM</label>
+          <select
+            className="filter-select"
+            value={filters.uom || ''}
+            onChange={(e) => onChange({ ...filters, uom: e.target.value })}
+          >
+            <option value="">All UOM</option>
+            {uoms.map((u) => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 }

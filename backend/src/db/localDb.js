@@ -20,7 +20,7 @@ const q = (id) => '"' + String(id).replace(/"/g, '""') + '"';
 // Bump this whenever the column layout of an existing report changes so the
 // old tables are dropped and rebuilt on the next refresh. Purely additive
 // changes (a brand-new report table) do not need a destructive migration.
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS billing (
@@ -54,6 +54,16 @@ CREATE TABLE IF NOT EXISTS throughput (
   "Inward_Qty" REAL, "Outward_Qty" REAL, "Inward_Pallet" REAL, "Outward_Pallet" REAL
 );
 
+CREATE TABLE IF NOT EXISTS billing2 (
+  "Date" TEXT, "Item_No" TEXT, "Item Name" TEXT, "Base UOM" TEXT,
+  "StorageType" TEXT, "Location Code" TEXT, "Opening" REAL, "In Quantity" REAL,
+  "Out Quantity" REAL, "Closing" REAL, "Status" TEXT, "Customer No" TEXT,
+  "Customer Name" TEXT,
+  "PALLET Conv" REAL, "Op Pal" REAL, "In Pal" REAL, "Out Pal" REAL, "Cl Pal" REAL,
+  "BILLKG Conv" REAL, "Op BillKg" REAL, "In BillKg" REAL, "Out BillKg" REAL, "Cl BillKg" REAL,
+  "CASE Conv" REAL, "Op Case" REAL, "In Case" REAL, "Out Case" REAL, "Cl Case" REAL
+);
+
 CREATE TABLE IF NOT EXISTS refresh_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ran_at TEXT NOT NULL,
@@ -62,6 +72,7 @@ CREATE TABLE IF NOT EXISTS refresh_log (
   utilization_rows INTEGER,
   item_master_rows INTEGER,
   throughput_rows INTEGER,
+  billing2_rows INTEGER,
   error TEXT
 );
 
@@ -73,6 +84,8 @@ CREATE INDEX IF NOT EXISTS idx_item_customer ON item_master("Customer");
 CREATE INDEX IF NOT EXISTS idx_item_location ON item_master("LocationCode");
 CREATE INDEX IF NOT EXISTS idx_thru_date ON throughput("Posting_Date");
 CREATE INDEX IF NOT EXISTS idx_thru_customer ON throughput("Customer_No");
+CREATE INDEX IF NOT EXISTS idx_billing2_date ON billing2("Date");
+CREATE INDEX IF NOT EXISTS idx_billing2_customer ON billing2("Customer No");
 `;
 
 // Migrations. Only a report whose *column layout changed* needs its table
@@ -94,11 +107,13 @@ if (storedVersion > 0 && storedVersion < 2) {
 
 db.exec(SCHEMA);
 
-// v2 -> v3 is additive (new throughput table). Backfill the refresh_log column
-// on databases that predate it.
+// v2 -> v3 (throughput) and v3 -> v4 (billing2) are additive: new report tables
+// created by SCHEMA above. Backfill any refresh_log columns that predate them.
 const refreshLogCols = db.prepare(`PRAGMA table_info(refresh_log)`).all().map((c) => c.name);
-if (!refreshLogCols.includes('throughput_rows')) {
-  db.exec(`ALTER TABLE refresh_log ADD COLUMN throughput_rows INTEGER`);
+for (const col of ['throughput_rows', 'billing2_rows']) {
+  if (!refreshLogCols.includes(col)) {
+    db.exec(`ALTER TABLE refresh_log ADD COLUMN ${col} INTEGER`);
+  }
 }
 
 if (storedVersion < SCHEMA_VERSION) {
@@ -137,11 +152,11 @@ function replaceTable(tableName, columns, rows) {
   swap();
 }
 
-function logRefresh({ status, billingRows, utilizationRows, itemMasterRows, throughputRows, error }) {
+function logRefresh({ status, billingRows, utilizationRows, itemMasterRows, throughputRows, billing2Rows, error }) {
   db.prepare(
-    `INSERT INTO refresh_log (ran_at, status, billing_rows, utilization_rows, item_master_rows, throughput_rows, error)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(new Date().toISOString(), status, billingRows ?? null, utilizationRows ?? null, itemMasterRows ?? null, throughputRows ?? null, error ?? null);
+    `INSERT INTO refresh_log (ran_at, status, billing_rows, utilization_rows, item_master_rows, throughput_rows, billing2_rows, error)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(new Date().toISOString(), status, billingRows ?? null, utilizationRows ?? null, itemMasterRows ?? null, throughputRows ?? null, billing2Rows ?? null, error ?? null);
 }
 
 module.exports = { db, replaceTable, logRefresh, q };

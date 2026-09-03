@@ -35,6 +35,8 @@ export const api = {
   itemMasterSummary: (params) => get('/item-master/summary', params),
   throughput: (params) => get('/throughput', params),
   throughputSummary: (params) => get('/throughput/summary', params),
+  billing2: (params) => get('/billing2', params),
+  billing2Summary: (params) => get('/billing2/summary', params),
   // Direct download URL for the "Export CSV" links (streams all matching rows).
   exportUrl: (path, params) => `${BASE}${path}${queryString(params)}`,
 };

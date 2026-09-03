@@ -27,15 +27,21 @@ const ENTITY = {
     customerCol: 'Customer_No', locationCol: 'Location_Code',
     order: `${q('Posting_Date')} DESC`,
   },
+  billing2: {
+    table: 'billing2', dateCol: 'Date',
+    customerCol: 'Customer No', locationCol: 'Location Code', uomCol: 'Base UOM',
+    order: `${q('Date')} DESC`,
+  },
 };
 
-function buildWhere(cfg, { dateFrom, dateTo, customerNo, locationCode } = {}) {
+function buildWhere(cfg, { dateFrom, dateTo, customerNo, locationCode, uom } = {}) {
   const clauses = [];
   const params = [];
   if (cfg.dateCol && dateFrom) { clauses.push(`${q(cfg.dateCol)} >= ?`); params.push(dateFrom); }
   if (cfg.dateCol && dateTo) { clauses.push(`${q(cfg.dateCol)} <= ?`); params.push(dateTo); }
   if (customerNo) { clauses.push(`${q(cfg.customerCol)} = ?`); params.push(customerNo); }
   if (locationCode) { clauses.push(`${q(cfg.locationCol)} = ?`); params.push(locationCode); }
+  if (cfg.uomCol && uom) { clauses.push(`${q(cfg.uomCol)} = ?`); params.push(uom); }
   return { where: clauses.length ? `WHERE ${clauses.join(' AND ')}` : '', params };
 }
 
@@ -84,6 +90,9 @@ router.get('/meta/filters', (req, res) => {
      UNION
      SELECT DISTINCT ${q('Customer_No')}, ${q('Customer_name')}
        FROM throughput WHERE ${q('Customer_No')} IS NOT NULL AND ${q('Customer_No')} <> ''
+     UNION
+     SELECT DISTINCT ${q('Customer No')}, ${q('Customer Name')}
+       FROM billing2 WHERE ${q('Customer No')} IS NOT NULL
      ORDER BY customer_name`
   ).all();
   const locations = db.prepare(
@@ -92,13 +101,18 @@ router.get('/meta/filters', (req, res) => {
        UNION SELECT ${q('Code')} FROM utilization WHERE ${q('Code')} IS NOT NULL
        UNION SELECT ${q('LocationCode')} FROM item_master WHERE ${q('LocationCode')} IS NOT NULL
        UNION SELECT ${q('Location_Code')} FROM throughput WHERE ${q('Location_Code')} IS NOT NULL
+       UNION SELECT ${q('Location Code')} FROM billing2 WHERE ${q('Location Code')} IS NOT NULL
      ) ORDER BY location_code`
   ).all();
+  const baseUoms = db.prepare(
+    `SELECT DISTINCT ${q('Base UOM')} AS uom FROM billing2
+     WHERE ${q('Base UOM')} IS NOT NULL AND ${q('Base UOM')} <> '' ORDER BY uom`
+  ).all().map((r) => r.uom);
   const lastRefresh = db.prepare(
-    `SELECT ran_at, status, billing_rows, utilization_rows, item_master_rows, throughput_rows
+    `SELECT ran_at, status, billing_rows, utilization_rows, item_master_rows, throughput_rows, billing2_rows
      FROM refresh_log ORDER BY id DESC LIMIT 1`
   ).get();
-  res.json({ customers, locations, lastRefresh: lastRefresh || null });
+  res.json({ customers, locations, baseUoms, lastRefresh: lastRefresh || null });
 });
 
 // ---- billing ----
@@ -234,5 +248,38 @@ router.get('/throughput/summary', (req, res) => {
 });
 
 router.get('/throughput/export', (req, res) => streamCsv(req, res, 'throughput', 'throughput'));
+
+// ---- billing GU (second customer set, PALLET/BILLKG/CASE breakdown) ----
+router.get('/billing2', (req, res) => {
+  const cfg = ENTITY.billing2;
+  const { where, params } = buildWhere(cfg, req.query);
+  const rows = db.prepare(
+    `SELECT * FROM billing2 ${where} ORDER BY ${cfg.order} LIMIT ?`
+  ).all(...params, Number(req.query.limit) || 500);
+  res.json(rows);
+});
+
+router.get('/billing2/summary', (req, res) => {
+  const cfg = ENTITY.billing2;
+  const { where, params } = buildWhere(cfg, req.query);
+  const daily = db.prepare(
+    `SELECT ${q('Date')} AS txn_date, SUM(${q('In Quantity')}) AS in_qty,
+            SUM(${q('Out Quantity')}) AS out_qty, SUM(${q('Closing')}) AS closing
+     FROM billing2 ${where} GROUP BY ${q('Date')} ORDER BY ${q('Date')}`
+  ).all(...params);
+  const byCustomer = db.prepare(
+    `SELECT ${q('Customer Name')} AS customer_name, SUM(${q('Closing')}) AS closing
+     FROM billing2 ${where} GROUP BY ${q('Customer Name')} ORDER BY closing DESC LIMIT 10`
+  ).all(...params);
+  const totals = db.prepare(
+    `SELECT SUM(${q('In Quantity')}) AS total_in, SUM(${q('Out Quantity')}) AS total_out,
+            COUNT(DISTINCT ${q('Item_No')}) AS active_items,
+            COUNT(DISTINCT ${q('Customer No')}) AS active_customers
+     FROM billing2 ${where}`
+  ).get(...params);
+  res.json({ daily, byCustomer, totals });
+});
+
+router.get('/billing2/export', (req, res) => streamCsv(req, res, 'billing2', 'billing_gu'));
 
 module.exports = router;

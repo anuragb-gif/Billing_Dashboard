@@ -49,10 +49,20 @@ const THROUGHPUT_COLUMNS = [
   'Inward_Pallet', 'Outward_Pallet',
 ];
 
+const BILLING2_COLUMNS = [
+  'Date', 'Item_No', 'Item Name', 'Base UOM', 'StorageType', 'Location Code',
+  'Opening', 'In Quantity', 'Out Quantity', 'Closing', 'Status', 'Customer No',
+  'Customer Name',
+  'PALLET Conv', 'Op Pal', 'In Pal', 'Out Pal', 'Cl Pal',
+  'BILLKG Conv', 'Op BillKg', 'In BillKg', 'Out BillKg', 'Cl BillKg',
+  'CASE Conv', 'Op Case', 'In Case', 'Out Case', 'Cl Case',
+];
+
 // Columns that come back from SQL Server as Date objects and need to be stored
 // as plain YYYY-MM-DD text.
 const DATE_COLUMNS = {
-  billing: ['Date'], utilization: ['OnDate'], item_master: [], throughput: ['Posting_Date'],
+  billing: ['Date'], utilization: ['OnDate'], item_master: [],
+  throughput: ['Posting_Date'], billing2: ['Date'],
 };
 
 function normalizeDates(rows, dateCols) {
@@ -97,12 +107,18 @@ async function runRefresh() {
     replaceTable('throughput', THROUGHPUT_COLUMNS, normalizeDates(thruRows, DATE_COLUMNS.throughput));
     console.log(`[refresh] throughput: ${thruRows.length} rows`);
 
+    console.log('[refresh] running billing GU query...');
+    const billing2Rows = await runQuery(loadQueryTemplate('billing2.sql', dateFrom, dateTo));
+    replaceTable('billing2', BILLING2_COLUMNS, normalizeDates(billing2Rows, DATE_COLUMNS.billing2));
+    console.log(`[refresh] billing GU: ${billing2Rows.length} rows`);
+
     logRefresh({
       status: 'success',
       billingRows: billingRows.length,
       utilizationRows: utilRows.length,
       itemMasterRows: itemRows.length,
       throughputRows: thruRows.length,
+      billing2Rows: billing2Rows.length,
     });
     console.log('[refresh] done.');
   } catch (err) {

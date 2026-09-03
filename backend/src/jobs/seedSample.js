@@ -123,6 +123,53 @@ function seedItemMaster() {
   return rows;
 }
 
+const GU_CUSTOMERS = [
+  ['GUAP000004', 'IDS Foods'],
+  ['GUAP000005', 'Semolina Kitchens Pvt Ltd'],
+  ['GUAP000036', 'Katlego Foods India Pvt Ltd'],
+  ['GUAP000042', 'Iscon Balaji Foods Pvt Ltd'],
+  ['GUAP000110', 'Godrej Foods Limited'],
+];
+
+function seedBilling2() {
+  const rows = [];
+  const today = new Date();
+  const palConv = 48, bkConv = 0.1, csConv = 1;
+  for (const [custNo, custName] of GU_CUSTOMERS) {
+    for (const [locCode] of LOCATIONS) {
+      for (const [itemNo, itemName, uom] of ITEMS) {
+        if (Math.random() < 0.4) continue;
+        let balance = randInt(500, 5000);
+        for (let d = 60; d >= 0; d--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - d);
+          const inQty = Math.random() < 0.3 ? randInt(0, 800) : 0;
+          const outQty = Math.random() < 0.3 ? randInt(0, Math.min(600, balance)) : 0;
+          const opening = balance;
+          balance = balance + inQty - outQty;
+          const closing = balance;
+          if (opening === 0 && inQty === 0 && outQty === 0 && closing === 0) continue;
+          const conv = (o, c) => ({
+            op: +(o / c).toFixed(2), in: +(inQty / c).toFixed(2),
+            out: +(outQty / c).toFixed(2), cl: +(closing / c).toFixed(2),
+          });
+          const p = conv(opening, palConv), b = conv(opening, bkConv), s = conv(opening, csConv);
+          rows.push({
+            'Date': dateStr(date), 'Item_No': itemNo, 'Item Name': itemName, 'Base UOM': uom,
+            'StorageType': pick(['FROZEN', 'CHILLED', 'DRY']), 'Location Code': locCode,
+            'Opening': opening, 'In Quantity': inQty, 'Out Quantity': outQty, 'Closing': closing,
+            'Status': 'Active', 'Customer No': custNo, 'Customer Name': custName,
+            'PALLET Conv': palConv, 'Op Pal': p.op, 'In Pal': p.in, 'Out Pal': p.out, 'Cl Pal': p.cl,
+            'BILLKG Conv': bkConv, 'Op BillKg': b.op, 'In BillKg': b.in, 'Out BillKg': b.out, 'Cl BillKg': b.cl,
+            'CASE Conv': csConv, 'Op Case': s.op, 'In Case': s.in, 'Out Case': s.out, 'Cl Case': s.cl,
+          });
+        }
+      }
+    }
+  }
+  return rows;
+}
+
 function seedThroughput() {
   const rows = [];
   const today = new Date();
@@ -168,16 +215,25 @@ const THROUGHPUT_COLUMNS = [
   'Posting_Date', 'Location_Code', 'Location_Name', 'Region', 'StorageType',
   'Customer_No', 'Customer_name', 'Inward_Qty', 'Outward_Qty', 'Inward_Pallet', 'Outward_Pallet',
 ];
+const BILLING2_COLUMNS = [
+  'Date', 'Item_No', 'Item Name', 'Base UOM', 'StorageType', 'Location Code',
+  'Opening', 'In Quantity', 'Out Quantity', 'Closing', 'Status', 'Customer No', 'Customer Name',
+  'PALLET Conv', 'Op Pal', 'In Pal', 'Out Pal', 'Cl Pal',
+  'BILLKG Conv', 'Op BillKg', 'In BillKg', 'Out BillKg', 'Cl BillKg',
+  'CASE Conv', 'Op Case', 'In Case', 'Out Case', 'Cl Case',
+];
 
 const billingRows = seedBilling();
 const utilRows = seedUtilization();
 const itemRows = seedItemMaster();
 const thruRows = seedThroughput();
+const billing2Rows = seedBilling2();
 
 replaceTable('billing', BILLING_COLUMNS, billingRows);
 replaceTable('utilization', UTILIZATION_COLUMNS, utilRows);
 replaceTable('item_master', ITEM_MASTER_COLUMNS, itemRows);
 replaceTable('throughput', THROUGHPUT_COLUMNS, thruRows);
-logRefresh({ status: 'success (sample data)', billingRows: billingRows.length, utilizationRows: utilRows.length, itemMasterRows: itemRows.length, throughputRows: thruRows.length });
+replaceTable('billing2', BILLING2_COLUMNS, billing2Rows);
+logRefresh({ status: 'success (sample data)', billingRows: billingRows.length, utilizationRows: utilRows.length, itemMasterRows: itemRows.length, throughputRows: thruRows.length, billing2Rows: billing2Rows.length });
 
-console.log(`Seeded sample data: billing=${billingRows.length}, utilization=${utilRows.length}, item_master=${itemRows.length}, throughput=${thruRows.length}`);
+console.log(`Seeded sample data: billing=${billingRows.length}, utilization=${utilRows.length}, item_master=${itemRows.length}, throughput=${thruRows.length}, billing2=${billing2Rows.length}`);

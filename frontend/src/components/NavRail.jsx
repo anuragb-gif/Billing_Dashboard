@@ -3,6 +3,7 @@ import { logout } from '../api';
 const PAGES = [
   { id: 'overview', label: 'Overview' },
   { id: 'billing', label: 'Billing' },
+  { id: 'billing-gu', label: 'Billing GU' },
   { id: 'utilization', label: 'Utilization' },
   { id: 'throughput', label: 'Throughput' },
   { id: 'item-master', label: 'Item Master' },
