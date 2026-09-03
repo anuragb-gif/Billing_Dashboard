@@ -79,7 +79,7 @@ SELECT ItemNo, CustomerNo, LocationCode, StorageType FROM #Window;
 SELECT [Date] INTO #Cal FROM Calender WHERE [Date] BETWEEN @DateFrom AND @DateTo;
 
 -------------------------------------------------------------------------
--- 5. Roll the balance forward
+-- 5. Roll the balance forward --- Need to combine the prior balance with the daily movement to get a running total for each day in the report window.
 -------------------------------------------------------------------------
 ;WITH Spine AS (
     SELECT
