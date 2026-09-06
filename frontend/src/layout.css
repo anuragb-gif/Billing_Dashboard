@@ -121,6 +121,58 @@
   margin-top: 2px;
 }
 
+/* ---- refresh status badge (top-right of every report) ---- */
+.refresh-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.refresh-badge-time {
+  padding-left: 8px;
+  border-left: 1px solid var(--line);
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.refresh-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  flex-shrink: 0;
+}
+
+.refresh-badge--ok .refresh-dot {
+  background: #1FA971;
+  box-shadow: 0 0 0 3px rgba(31, 169, 113, 0.16);
+}
+.refresh-badge--stale .refresh-dot {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px var(--amber-soft);
+}
+.refresh-badge--fail {
+  color: #A5372F;
+  border-color: rgba(209, 67, 67, 0.35);
+}
+.refresh-badge--fail .refresh-dot {
+  background: #D14343;
+  box-shadow: 0 0 0 3px rgba(209, 67, 67, 0.16);
+}
+
+@media (max-width: 720px) {
+  .refresh-badge-time { display: none; }
+}
+
 /* ---- Filter bar ---- */
 .filter-bar {
   display: flex;

@@ -9,7 +9,7 @@ const PAGES = [
   { id: 'item-master', label: 'Item Master' },
 ];
 
-export default function NavRail({ activePage, onNavigate, lastRefresh }) {
+export default function NavRail({ activePage, onNavigate }) {
   return (
     <nav className="nav-rail">
       <div className="nav-brand">
@@ -28,21 +28,9 @@ export default function NavRail({ activePage, onNavigate, lastRefresh }) {
         ))}
       </div>
       <div className="nav-footer">
-        {lastRefresh ? (
-          <>Data refreshed<br />{formatRefreshTime(lastRefresh.ran_at)}</>
-        ) : (
-          <>Refresh status unavailable</>
-        )}
+        Snowman Logistics
         <button type="button" className="nav-logout" onClick={logout}>Log out</button>
       </div>
     </nav>
   );
-}
-
-function formatRefreshTime(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleString(undefined, {
-    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
 }

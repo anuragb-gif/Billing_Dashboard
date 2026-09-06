@@ -3,6 +3,7 @@ import './index.css';
 import './layout.css';
 import NavRail from './components/NavRail';
 import FilterBar from './components/FilterBar';
+import RefreshBadge from './components/RefreshBadge';
 import Overview from './pages/Overview';
 import Billing from './pages/Billing';
 import Billing2 from './pages/Billing2';
@@ -43,13 +44,14 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <NavRail activePage={activePage} onNavigate={setActivePage} lastRefresh={meta.lastRefresh} />
+      <NavRail activePage={activePage} onNavigate={setActivePage} />
       <main className="main">
         <div className="page-header">
           <div>
             <div className="page-title">{title}</div>
             <div className="page-subtitle">{subtitle}</div>
           </div>
+          <RefreshBadge lastRefresh={meta.lastRefresh} />
         </div>
 
         <FilterBar
