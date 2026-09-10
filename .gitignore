@@ -6,3 +6,6 @@ backend/.env
 
 # Vercel CLI link folder - never commit (holds project/org IDs)
 .vercel/
+
+# dev tunnel binary - downloaded per-machine, not source (see deploy/TUNNEL-RUNBOOK.md)
+deploy/devtunnel.exe
