@@ -35,12 +35,12 @@ const UTILIZATION_COLUMNS = [
 ];
 
 const ITEM_MASTER_COLUMNS = [
-  'Report', 'LocationCode', 'Customer', 'Location', 'Customer Name', 'ItemNo',
-  'Min_Billable Quantity', 'PalletConv', 'KGConv', 'CASEConv', 'CRATEConv',
-  'BILLKGConv', 'BAGConv', 'BOTTLEConv', 'BOXConv', 'BUCKETConv', 'DRUMConv',
-  'EACHConv', 'NOSConv', 'PCSConv', 'PKTConv', 'Billing Category Qty',
-  'BillingCategoryUOM', 'Storage_Type', 'Unit_Price', 'Base_Unit_of_Measure',
-  'Quantity', 'Qty in Pal', 'Item Name',
+  'Report', 'LocationCode', 'Location', 'Customer', 'Customer Name', 'ItemNo',
+  'Item Name', 'Base_Unit_of_Measure', 'Quantity', 'Storage_Type',
+  'PalletConv', 'Billing Category Qty', 'BillingCategoryUOM', 'KGConv',
+  'CASEConv', 'CRATEConv', 'BILLKGConv', 'BAGConv', 'BOXConv', 'DRUMConv',
+  'NOSConv', 'PCSConv', 'PKTConv', 'BOTTLEConv', 'BUCKETConv', 'EACHConv',
+  'Unit_Price', 'Qty in Pal', 'Min_Billable Quantity',
 ];
 
 const THROUGHPUT_COLUMNS = [

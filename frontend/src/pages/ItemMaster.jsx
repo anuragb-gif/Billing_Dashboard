@@ -8,37 +8,37 @@ const STORAGE_COLORS = { FROZEN: '#3E7CB1', CHILLED: '#0D9797', DRY: '#B98A3E' }
 
 const num = (key) => ({ key, label: key, numeric: true, render: (r) => formatNumber(r[key]) });
 
-// Every column the item master report returns, in its original order and names.
+// Every column the item master report returns, in the agreed report order.
 const COLUMNS = [
   { key: 'Report', label: 'Report' },
   { key: 'LocationCode', label: 'LocationCode' },
-  { key: 'Customer', label: 'Customer' },
   { key: 'Location', label: 'Location' },
+  { key: 'Customer', label: 'Customer' },
   { key: 'Customer Name', label: 'Customer Name' },
   { key: 'ItemNo', label: 'ItemNo' },
-  num('Min_Billable Quantity'),
+  { key: 'Item Name', label: 'Item Name' },
+  { key: 'Base_Unit_of_Measure', label: 'Base_Unit_of_Measure' },
+  num('Quantity'),
+  { key: 'Storage_Type', label: 'Storage_Type' },
   num('PalletConv'),
+  num('Billing Category Qty'),
+  { key: 'BillingCategoryUOM', label: 'BillingCategoryUOM' },
   num('KGConv'),
   num('CASEConv'),
   num('CRATEConv'),
   num('BILLKGConv'),
   num('BAGConv'),
-  num('BOTTLEConv'),
   num('BOXConv'),
-  num('BUCKETConv'),
   num('DRUMConv'),
-  num('EACHConv'),
   num('NOSConv'),
   num('PCSConv'),
   num('PKTConv'),
-  num('Billing Category Qty'),
-  { key: 'BillingCategoryUOM', label: 'BillingCategoryUOM' },
-  { key: 'Storage_Type', label: 'Storage_Type' },
+  num('BOTTLEConv'),
+  num('BUCKETConv'),
+  num('EACHConv'),
   num('Unit_Price'),
-  { key: 'Base_Unit_of_Measure', label: 'Base_Unit_of_Measure' },
-  num('Quantity'),
   num('Qty in Pal'),
-  { key: 'Item Name', label: 'Item Name' },
+  num('Min_Billable Quantity'),
 ];
 
 export default function ItemMaster({ filters }) {

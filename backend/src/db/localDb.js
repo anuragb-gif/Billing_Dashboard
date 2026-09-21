@@ -20,7 +20,7 @@ const q = (id) => '"' + String(id).replace(/"/g, '""') + '"';
 // Bump this whenever the column layout of an existing report changes so the
 // old tables are dropped and rebuilt on the next refresh. Purely additive
 // changes (a brand-new report table) do not need a destructive migration.
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS billing (
@@ -38,14 +38,14 @@ CREATE TABLE IF NOT EXISTS utilization (
 );
 
 CREATE TABLE IF NOT EXISTS item_master (
-  "Report" TEXT, "LocationCode" TEXT, "Customer" TEXT, "Location" TEXT,
-  "Customer Name" TEXT, "ItemNo" TEXT, "Min_Billable Quantity" REAL,
-  "PalletConv" REAL, "KGConv" REAL, "CASEConv" REAL, "CRATEConv" REAL,
-  "BILLKGConv" REAL, "BAGConv" REAL, "BOTTLEConv" REAL, "BOXConv" REAL,
-  "BUCKETConv" REAL, "DRUMConv" REAL, "EACHConv" REAL, "NOSConv" REAL,
-  "PCSConv" REAL, "PKTConv" REAL, "Billing Category Qty" REAL,
-  "BillingCategoryUOM" TEXT, "Storage_Type" TEXT, "Unit_Price" REAL,
-  "Base_Unit_of_Measure" TEXT, "Quantity" REAL, "Qty in Pal" REAL, "Item Name" TEXT
+  "Report" TEXT, "LocationCode" TEXT, "Location" TEXT, "Customer" TEXT,
+  "Customer Name" TEXT, "ItemNo" TEXT, "Item Name" TEXT,
+  "Base_Unit_of_Measure" TEXT, "Quantity" REAL, "Storage_Type" TEXT,
+  "PalletConv" REAL, "Billing Category Qty" REAL, "BillingCategoryUOM" TEXT,
+  "KGConv" REAL, "CASEConv" REAL, "CRATEConv" REAL, "BILLKGConv" REAL,
+  "BAGConv" REAL, "BOXConv" REAL, "DRUMConv" REAL, "NOSConv" REAL,
+  "PCSConv" REAL, "PKTConv" REAL, "BOTTLEConv" REAL, "BUCKETConv" REAL,
+  "EACHConv" REAL, "Unit_Price" REAL, "Qty in Pal" REAL, "Min_Billable Quantity" REAL
 );
 
 CREATE TABLE IF NOT EXISTS throughput (
@@ -101,6 +101,14 @@ if (storedVersion > 0 && storedVersion < 2) {
     DROP TABLE IF EXISTS item_master;
     DROP TABLE IF EXISTS billing_staging;
     DROP TABLE IF EXISTS utilization_staging;
+    DROP TABLE IF EXISTS item_master_staging;
+  `);
+}
+
+// v4 -> v5: item_master column order was rearranged for the report layout.
+if (storedVersion > 0 && storedVersion < 5) {
+  db.exec(`
+    DROP TABLE IF EXISTS item_master;
     DROP TABLE IF EXISTS item_master_staging;
   `);
 }
