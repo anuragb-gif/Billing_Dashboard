@@ -6,6 +6,21 @@ Everything below runs **on the office server SLL-BCD365**, as user **Anirudh**
 `devtunnel.exe` lives at `C:\Users\Anirudh\devtunnel.exe` and
 `G:\Billing Dashboard\snowman-dashboard\deploy\devtunnel.exe`.
 
+## After a reboot (how the tunnel comes back)
+
+The "Snowman Dashboard Tunnel" scheduled task does NOT work: devtunnel can't
+read its saved login from a "run whether user is logged on or not" session
+(fails with `0x80070520`). Instead, the tunnel starts when **Anirudh logs in**
+(e.g. over Remote Desktop), via:
+
+`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\Snowman Dashboard Tunnel.cmd`
+→ runs `deploy\start-tunnel.ps1` (kills the broken task's crash-loop, starts the host).
+
+So after a reboot: **just RDP in as Anirudh** — the tunnel is up ~20s later.
+The dashboard server itself restarts on its own via its own scheduled task.
+
+Manual restart any time: `powershell -File "G:\Billing Dashboard\snowman-dashboard\deploy\start-tunnel.ps1"`
+
 ## What is already set up (don't redo)
 
 - `devtunnel user login` — done, token cached under Anirudh's profile.
