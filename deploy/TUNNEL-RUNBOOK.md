@@ -19,6 +19,13 @@ read its saved login from a "run whether user is logged on or not" session
 So after a reboot: **just RDP in as Anirudh** — the tunnel is up ~20s later.
 The dashboard server itself restarts on its own via its own scheduled task.
 
+**Watchdog:** task "Snowman Tunnel Watchdog" (Anirudh, interactive, every
+10 min + at logon) runs `deploy\tunnel-watchdog.ps1` via `run-hidden.vbs`.
+It restarts the host if the process died **or** is stuck with 0 host
+connections — the host can stay alive after a relay drop while failing to
+reconnect ("Refreshed tunnel access token is not valid"). Restarts are
+logged to `deploy\tunnel-watchdog.log`.
+
 Manual restart any time: `powershell -File "G:\Billing Dashboard\snowman-dashboard\deploy\start-tunnel.ps1"`
 
 ## What is already set up (don't redo)

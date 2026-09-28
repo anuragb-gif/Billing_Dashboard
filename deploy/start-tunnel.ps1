@@ -4,12 +4,16 @@
 # Why not Task Scheduler: devtunnel can't read its saved login from a
 # "run whether user is logged on or not" (batch) session - it fails with
 # 0x80070520. It works fine from a normal interactive session.
+#
+# -NoDelay skips the post-logon wait (used by tunnel-watchdog.ps1).
+
+param([switch]$NoDelay)
 
 $DevTunnel = 'C:\Users\Anirudh\devtunnel.exe'
 $LogDir    = 'G:\Billing Dashboard\snowman-dashboard\deploy'
 
 # Give the network a moment after logon.
-Start-Sleep -Seconds 15
+if (-not $NoDelay) { Start-Sleep -Seconds 15 }
 
 # Stop the old startup task's crash-loop (run-tunnel.bat) and any stale host,
 # so nothing fights this process for the tunnel's single host slot.
