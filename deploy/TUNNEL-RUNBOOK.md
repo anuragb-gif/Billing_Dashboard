@@ -26,6 +26,18 @@ connections — the host can stay alive after a relay drop while failing to
 reconnect ("Refreshed tunnel access token is not valid"). Restarts are
 logged to `deploy\tunnel-watchdog.log`.
 
+**Login expiry (needs a person):** the devtunnel sign-in itself expires
+periodically (first time: ~4 weeks after setup). Restarting can't fix that —
+`tunnel-watchdog.log` will say `LOGIN EXPIRED`. To fix:
+
+```powershell
+& "C:\Users\Anirudh\devtunnel.exe" user login -d
+```
+
+Open the URL it prints, enter the code, and sign in as **pbidev@SNOWMAN.IN**
+(the tunnel's owner — any other account gets "expected one or more of [host]").
+The watchdog brings the tunnel back within 10 minutes of signing in.
+
 Manual restart any time: `powershell -File "G:\Billing Dashboard\snowman-dashboard\deploy\start-tunnel.ps1"`
 
 ## What is already set up (don't redo)

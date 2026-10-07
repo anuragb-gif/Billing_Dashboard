@@ -12,6 +12,18 @@ $DevTunnel = 'C:\Users\Anirudh\devtunnel.exe'
 $Deploy    = 'G:\Billing Dashboard\snowman-dashboard\deploy'
 $Log       = "$Deploy\tunnel-watchdog.log"
 
+# An expired devtunnel login can't be fixed by restarting - it needs a person to
+# sign in again as pbidev@SNOWMAN.IN. Say so in the log (once, not every run).
+$user = & $DevTunnel user show 2>&1 | Out-String
+if ($user -notmatch 'Logged in as') {
+    $msg  = 'LOGIN EXPIRED - tunnel cannot start. Sign in again: devtunnel user login -d (as pbidev@SNOWMAN.IN)'
+    $last = Get-Content -Path $Log -Tail 1 -ErrorAction SilentlyContinue
+    if ($last -notlike "*$msg") {
+        Add-Content -Path $Log -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $msg"
+    }
+    exit 1
+}
+
 $running = [bool](Get-Process devtunnel -ErrorAction SilentlyContinue)
 $show    = & $DevTunnel show snowman-dash 2>&1 | Out-String
 $hosts   = if ($show -match 'Host connections\s*:\s*(\d+)') { [int]$Matches[1] } else { -1 }
